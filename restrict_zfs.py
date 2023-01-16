@@ -6,7 +6,8 @@ import sys
 
 POOL = r"'[a-z0-9_-]+'"
 DATASET = r"'([a-z0-9_-]+\/?)+'"
-DATASET_SNAPSHOT = r"'([a-z0-9_-]+\/?)+'@'[a-z0-9:_-]+'"
+DATASET_SNAPSHOT = r"'([a-z0-9_-]+\/?)+'?@'?[a-z0-9:_-]+'"
+RESUME_TOKEN = r"[a-z0-9-]+"
 
 # These commands were issued by Syncoid with standard options. If in your
 # usage you notice any commands that should be allowed but aren't allowed
@@ -18,13 +19,22 @@ ALLOWED_COMMANDS = [
     r'zpool get -o value -H feature@extensible_dataset ' + POOL,
     r'ps -Ao args=',
     r'zfs get -H (name|receive_resume_token) ' + DATASET,
-    r'zfs get -Hpd 1 -t snapshot guid,creation ' + DATASET,
+    r'zfs get -Hpd 1 -t (snapshot|bookmark) guid,creation ' + DATASET,
     r'zfs get -H -p used ' + DATASET,
     r' lzop -dfc \|  zfs receive  -s -F ' + DATASET,
     r' lzop -dfc \|  zfs receive  -s -F ' + DATASET + r' 2>&1',
     r' zfs rollback -R ' + DATASET_SNAPSHOT,
     r' mbuffer (-r \d+[kM])? -q -s \d+[kM] -m \d+[kM] 2>\/dev\/null \| lzop -dfc \|  zfs receive  -s -F ' + DATASET,
     r' mbuffer (-r \d+[kM])? -q -s \d+[kM] -m \d+[kM] 2>\/dev\/null \| lzop -dfc \|  zfs receive  -s -F ' + DATASET + ' 2>&1',
+    r'zfs list -o name,origin -t filesystem,volume -Hr ' + DATASET,
+    r'zfs get -H syncoid:sync ' + DATASET,
+    r'zfs send -w -nvP ' + DATASET_SNAPSHOT,
+    r'zfs send -w -nvP -I ' + DATASET_SNAPSHOT + ' ' + DATASET_SNAPSHOT,
+    r' zfs send -w  ' + DATASET_SNAPSHOT + ' \| lzop  \| mbuffer  -q -s \d+[kM] -m \d+[kM] 2>\/dev\/null',
+    r' zfs send -w  -I ' + DATASET_SNAPSHOT + ' ' + DATASET_SNAPSHOT  + ' \| lzop  \| mbuffer  -q -s \d+[kM] -m \d+[kM] 2>\/dev\/null',
+    r'zfs list -o name -Hr ' + DATASET,
+    r' zfs send -w  -t ' + RESUME_TOKEN + ' \| lzop  \| mbuffer  -q -s \d+[kM] -m \d+[kM] 2>\/dev\/null',
+    r'zfs send -nvP -t ' + RESUME_TOKEN,
 ]
 
 COMPILED = [re.compile(command) for command in ALLOWED_COMMANDS]
